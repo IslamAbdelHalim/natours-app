@@ -1,25 +1,8 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const Tour = require('./models/Tour');
-dotenv.config({ path: './config.env' });
-
+require('dotenv').config({ path: '../config.env' });
+const connectDB = require('./database/db');
 const app = require('./app');
 
-const DB = process.env.DATABASE.replace(
-  '<db_password>',
-  process.env.DATABASE_PASS,
-);
-
-mongoose
-  .connect(DB)
-  .then(() => console.log('Connected To DataBase successful'))
-  .catch((err) => console.log(err));
-
-const newTour = new Tour({
-  name: 'Islam',
-});
-
-newTour.save().then((doc) => console.log(doc));
+connectDB();
 
 const port = process.env.PORT;
 const host = process.env.HOST;

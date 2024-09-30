@@ -1,18 +1,12 @@
-const fs = require("fs");
-const path = require("path");
+const Tour = require('../models/Tour');
+const APIFeature = require('.././utils/apiFeature');
 
-const filePath = path.resolve(__dirname, "../dev-data/data/tours-simple.json");
-
-const tours = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-
-function checkID(req, res, next, val) {
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Invalid ID",
-    });
-  }
-
+//middleware for cheapest 5 and hight rating
+function topRatingAndCheapest(req, res, next) {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields =
+    'name, price, ratingsAverage, startDates, ratingsQuantity, difficulty';
   next();
 }
 
@@ -24,9 +18,16 @@ function checkID(req, res, next, val) {
  * @method GET
  * @access public
  */
-function getAllTours(req, res) {
+async function getAllTours(req, res) {
+  let tours = new APIFeature(Tour, req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+  tours = await tours.query;
+
   res.status(200).json({
-    status: "success",
+    status: 'success',
     results: tours.length,
     data: {
       tours,
@@ -40,22 +41,26 @@ function getAllTours(req, res) {
  * @method PUT
  * @access private (only admin)
  */
-function createNewTour(req, res) {
-  // create an Id
-  const id = tours.length + 1;
-  // create an object tour
-  const newTour = Object.assign({ id: id }, req.body);
-  tours.push(newTour);
+async function createNewTour(req, res) {
+  try {
+    //method one
+    const tour = await Tour.create(req.body);
 
-  //persist in Json file and use asynchronous function because you inside event loop
-  fs.writeFile(filePath, JSON.stringify(tours), "utf-8", (error) => {
+    // method two
+    // const newTour = new Tour(req.body);
+
+    //persist in  and use asynchronous function because you inside event loop
+    // const tour = await newTour.save();
     res.status(201).json({
-      status: "success",
+      status: 'success',
       data: {
-        tour: newTour,
+        tour: tour,
       },
     });
-  });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'server error.....' });
+  }
 }
 
 /**
@@ -64,16 +69,14 @@ function createNewTour(req, res) {
  * @method GET
  * @access private
  */
-function getTourById(req, res) {
-  const id = parseInt(req.params.id);
-  const tour = tours.find((t) => t.id === id);
-  // console.log(tour)
+async function getTourById(req, res) {
+  const tour = await Tour.findById(req.params.id);
   if (!tour) {
-    return res.status(404).json({ success: "fail" });
+    res.status(404).json({ message: 'not found' });
+    return;
   }
   res.status(200).json({
-    status: "success",
-    results: tours.length,
+    status: 'success',
     data: {
       tour: tour,
     },
@@ -86,17 +89,20 @@ function getTourById(req, res) {
  * @method PATCH
  * @access private (only admin)
  */
-function updateTourById(req, res) {
-  const tour = tours.find((ele) => ele.id === parseInt(req.params.id));
-  const updates = req.body;
-  for (let [key, value] of Object.entries(updates)) {
-    tour[key] = value;
+async function updateTourById(req, res) {
+  try {
+    const newTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    res.status(200).json({
+      message: 'Update this tour',
+      newTour,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'server error....' });
   }
-
-  res.status(200).json({
-    message: "Update this tour",
-    tour,
-  });
 }
 
 /**
@@ -105,17 +111,60 @@ function updateTourById(req, res) {
  * @method DELETE
  * @access private (only admin)
  */
-function deleteTourById(req, res) {
-  res.status(200).json({
-    message: "Deleted",
+async function deleteTourById(req, res) {
+  await Tour.findByIdAndDelete(req.params.id);
+  res.status(204).json({
+    message: 'Deleted',
   });
 }
 
+/**
+ * @desc Request to  get All statistics (aggregate pipline)
+ * @route /
+ * @method GET
+ * @access private (only admin)
+ */
+async function getStatistics(req, res) {
+  try {
+    const statistics = await Tour.aggregate([
+      {
+        $match: {
+          ratingsAverage: { $gte: 4.5 },
+        },
+      },
+      {
+        $group: {
+          _id: '$difficulty',
+          numTour: { $sum: 1 },
+          sumRating: { $sum: '$ratingsQuantity' },
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+        },
+      },
+      {
+        $sort: { avgPrice: 1 },
+      },
+    ]);
+
+    console.log(statistics);
+    res.status(200).json({
+      message: 'success',
+      statistics,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'server Error.....' });
+  }
+}
+
 module.exports = {
-  checkID,
   getAllTours,
   createNewTour,
   getTourById,
   updateTourById,
   deleteTourById,
+  getStatistics,
+  topRatingAndCheapest,
 };
