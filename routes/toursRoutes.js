@@ -7,6 +7,7 @@ const {
   deleteTourById,
   getStatistics,
   topRatingAndCheapest,
+  getToursInYear,
 } = require('../controllers/toursControllers');
 const asyncHandler = require('express-async-handler');
 
@@ -27,6 +28,7 @@ function validateNewTour(req, res, next) {
 router.route('/top-5-cheapest').get(topRatingAndCheapest, getAllTours);
 
 router.route('/statistics').get(getStatistics);
+router.route('/tours-in-year/:year').get(asyncHandler(getToursInYear));
 
 //chaining method
 router
