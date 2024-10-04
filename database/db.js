@@ -7,12 +7,8 @@ const DB = process.env.DATABASE.replace(
 );
 
 async function connectDB() {
-  try {
-    await mongoose.connect(DB);
-    console.log('Connected Successfully To DateBase');
-  } catch (err) {
-    console.log(err);
-  }
+  await mongoose.connect(DB);
+  console.log('Connected Successfully To DateBase');
 }
 
 module.exports = connectDB;

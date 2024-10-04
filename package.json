@@ -4,8 +4,9 @@
   "description": "This a project by express and mongoDB",
   "main": "app.js",
   "scripts": {
-    "start:dev": "NODE_ENV=development nodemon server.js",
+    "start:dev": "nodemon server.js",
     "start:prod": "NODE_ENV=production nodemon server.js",
+    "debug": "ndb server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Islam Ahmed",
@@ -28,6 +29,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.36.1",
     "morgan": "^1.10.0",
+    "ndb": "^1.1.5",
     "nodemon": "^3.1.4",
     "prettier": "^3.3.3"
   }

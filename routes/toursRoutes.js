@@ -13,17 +13,6 @@ const asyncHandler = require('express-async-handler');
 
 const router = express.Router();
 
-//middleware for validation the create a new tour
-function validateNewTour(req, res, next) {
-  if (!req.body.name || !req.body.price) {
-    return res.status(400).json({
-      message: 'Bad Request',
-    });
-  }
-
-  next();
-}
-
 // top 5 rating and cheap (Aliases)
 router.route('/top-5-cheapest').get(topRatingAndCheapest, getAllTours);
 
@@ -34,7 +23,7 @@ router.route('/tours-in-year/:year').get(asyncHandler(getToursInYear));
 router
   .route('/')
   .get(asyncHandler(getAllTours))
-  .post(validateNewTour, createNewTour);
+  .post(asyncHandler(createNewTour));
 
 router
   .route('/:id')

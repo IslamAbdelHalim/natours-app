@@ -1,5 +1,6 @@
 const Tour = require('../models/Tour');
 const APIFeature = require('.././utils/apiFeature');
+const AppError = require('../utils/appError');
 
 //middleware for cheapest 5 and hight rating
 function topRatingAndCheapest(req, res, next) {
@@ -42,25 +43,20 @@ async function getAllTours(req, res) {
  * @access private (only admin)
  */
 async function createNewTour(req, res) {
-  try {
-    //method one
-    const tour = await Tour.create(req.body);
+  //method one
+  const tour = await Tour.create(req.body);
 
-    // method two
-    // const newTour = new Tour(req.body);
+  // method two
+  // const newTour = new Tour(req.body);
 
-    //persist in  and use asynchronous function because you inside event loop
-    // const tour = await newTour.save();
-    res.status(201).json({
-      status: 'success',
-      data: {
-        tour: tour,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: 'server error.....' });
-  }
+  //persist in  and use asynchronous function because you inside event loop
+  // const tour = await newTour.save();
+  res.status(201).json({
+    status: 'success',
+    data: {
+      tour: tour,
+    },
+  });
 }
 
 /**
@@ -69,12 +65,11 @@ async function createNewTour(req, res) {
  * @method GET
  * @access private
  */
-async function getTourById(req, res) {
+async function getTourById(req, res, next) {
   const tour = await Tour.findById(req.params.id);
-  if (!tour) {
-    res.status(404).json({ message: 'not found' });
-    return;
-  }
+
+  if (!tour) return next(new AppError('No tour found with this ID', 404));
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -89,20 +84,18 @@ async function getTourById(req, res) {
  * @method PATCH
  * @access private (only admin)
  */
-async function updateTourById(req, res) {
-  try {
-    const newTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    res.status(200).json({
-      message: 'Update this tour',
-      newTour,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: 'server error....' });
-  }
+async function updateTourById(req, res, next) {
+  const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!tour) return next(new AppError('No tour found with this ID', 404));
+
+  res.status(200).json({
+    message: 'Update this tour',
+    tour,
+  });
 }
 
 /**
@@ -111,52 +104,49 @@ async function updateTourById(req, res) {
  * @method DELETE
  * @access private (only admin)
  */
-async function deleteTourById(req, res) {
-  await Tour.findByIdAndDelete(req.params.id);
+async function deleteTourById(req, res, next) {
+  const tour = await Tour.findByIdAndDelete(req.params.id);
+
+  if (!tour) return next(new AppError('No tour found with this ID', 404));
+
   res.status(204).json({
     message: 'Deleted',
   });
 }
 
 /**
- * @desc Request to  get All statistics (aggregate pipline)
+ * @desc Request to  get All statistics (aggregate pipeline)
  * @route /
  * @method GET
  * @access private (only admin)
  */
 async function getStatistics(req, res) {
-  try {
-    const statistics = await Tour.aggregate([
-      {
-        $match: {
-          ratingsAverage: { $gte: 4.5 },
-        },
+  const statistics = await Tour.aggregate([
+    {
+      $match: {
+        ratingsAverage: { $gte: 4.5 },
       },
-      {
-        $group: {
-          _id: '$difficulty',
-          numTour: { $sum: 1 },
-          sumRating: { $sum: '$ratingsQuantity' },
-          avgRating: { $avg: '$ratingsAverage' },
-          avgPrice: { $avg: '$price' },
-          minPrice: { $min: '$price' },
-          maxPrice: { $max: '$price' },
-        },
+    },
+    {
+      $group: {
+        _id: '$difficulty',
+        numTour: { $sum: 1 },
+        sumRating: { $sum: '$ratingsQuantity' },
+        avgRating: { $avg: '$ratingsAverage' },
+        avgPrice: { $avg: '$price' },
+        minPrice: { $min: '$price' },
+        maxPrice: { $max: '$price' },
       },
-      {
-        $sort: { avgPrice: 1 },
-      },
-    ]);
+    },
+    {
+      $sort: { avgPrice: 1 },
+    },
+  ]);
 
-    console.log(statistics);
-    res.status(200).json({
-      message: 'success',
-      statistics,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: 'server Error.....' });
-  }
+  res.status(200).json({
+    message: 'success',
+    statistics,
+  });
 }
 
 async function getToursInYear(req, res) {
