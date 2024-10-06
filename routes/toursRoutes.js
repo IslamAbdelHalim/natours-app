@@ -1,4 +1,5 @@
 const express = require('express');
+const asyncHandler = require('express-async-handler');
 const {
   getAllTours,
   createNewTour,
@@ -9,7 +10,7 @@ const {
   topRatingAndCheapest,
   getToursInYear,
 } = require('../controllers/toursControllers');
-const asyncHandler = require('express-async-handler');
+const protectRoute = require('../controllers/authControllers').protectRoute;
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.route('/tours-in-year/:year').get(asyncHandler(getToursInYear));
 //chaining method
 router
   .route('/')
-  .get(asyncHandler(getAllTours))
+  .get(protectRoute, asyncHandler(getAllTours))
   .post(asyncHandler(createNewTour));
 
 router

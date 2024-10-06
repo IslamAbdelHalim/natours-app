@@ -4,7 +4,7 @@ exports.notFoundHandling = (req, res, next) => {
   // const err = new Error(`Can not find ${req.originalUrl} on this server!`);
   // err.status = 'fail';
   // err.statusCode = 404;
-  next(new AppError('Can not find ${req.originalUrl} on this server!', 404));
+  next(new AppError(`Can not find ${req.originalUrl} on this server!`, 404));
 };
 
 exports.globalErrorHandling = (err, req, res, next) => {
@@ -30,11 +30,15 @@ exports.globalErrorHandling = (err, req, res, next) => {
       err = new AppError(message, 400);
     }
 
+    if (err.name === 'JsonWebTokenError') {
+      err = new AppError('Invalid Token please login', 401);
+    }
+
     sendErrorProd(err, res);
   }
 };
 
-// message that will sent for developer
+// message that will send for developer
 function sendErrorDevelop(err, res) {
   res.status(err.statusCode).json({
     status: err.status,
