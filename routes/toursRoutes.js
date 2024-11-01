@@ -11,6 +11,7 @@ const {
   getToursInYear,
 } = require('../controllers/toursControllers');
 const protectRoute = require('../controllers/authControllers').protectRoute;
+const restrict = require('../controllers/authControllers').restrict;
 
 const router = express.Router();
 
@@ -30,6 +31,10 @@ router
   .route('/:id')
   .get(asyncHandler(getTourById))
   .patch(asyncHandler(updateTourById))
-  .delete(asyncHandler(deleteTourById));
+  .delete(
+    protectRoute,
+    restrict('admin', 'lead-guide'),
+    asyncHandler(deleteTourById),
+  );
 
 module.exports = router;

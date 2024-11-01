@@ -105,7 +105,9 @@ async function updateTourById(req, res, next) {
  * @access private (only admin)
  */
 async function deleteTourById(req, res, next) {
+  console.log(`delete this ${req.params.id}`);
   const tour = await Tour.findByIdAndDelete(req.params.id);
+  console.log(tour);
 
   if (!tour) return next(new AppError('No tour found with this ID', 404));
 
