@@ -78,9 +78,27 @@ async function deleteUser(req, res) {
   });
 }
 
+/**
+ * @desc Return user Data
+ * @route /
+ * @method get
+ * @access private
+ */
+async function getMe (req, res) {
+  const user = await User.findById(req.user.id);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user
+    }
+  })
+}
+
 module.exports = {
   getAllUsers,
   getUser,
   updateUser,
   deleteUser,
+  getMe
 };

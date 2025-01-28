@@ -8,6 +8,7 @@ process.on('uncaughtException', (err) => {
 
 const app = require('./app');
 
+
 connectDB();
 
 const port = process.env.PORT;
