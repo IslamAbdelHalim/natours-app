@@ -178,6 +178,72 @@ async function getToursInYear(req, res) {
   }
 }
 
+/**
+ * @desc Get Tours with in specific distance from specific location
+ * @route /tours-within/:distance/center/:latlang/unit/:unit
+ * @method GET
+ * @access protected
+ */
+async function getToursWithin(req, res, next) {
+  const { distance, latlang, unit } = req.params;
+  const [lat, long] = latlang.split(',');
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+
+  if (!lat || !long) {
+    return next (new AppError('please provide correct longitude and latitude'))
+  }
+
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[long, lat], radius]}}
+  });
+
+  res.status(200).json({
+    status: 'success',
+    result: tours.length,
+    data: {
+      data: tours,
+    }
+  })
+}
+
+async function getDistance (req, res, next) {
+  const { latlang, unit } = req.params;
+  const [lat, lng] = latlang.split(',');
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+
+  if (!lat || !lng) {
+    return next (new AppError('please provide correct longitude and latitude'))
+  }
+
+  console.log(lat, lng)
+
+  const distance = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [lng * 1, lat * 1]
+        },
+        distanceField: 'distance',
+        distanceMultiplier: multiplier
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        distance: 1
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: distance
+    }
+  })
+}
+
 module.exports = {
   getAllTours,
   createNewTour,
@@ -187,4 +253,6 @@ module.exports = {
   getStatistics,
   topRatingAndCheapest,
   getToursInYear,
+  getToursWithin,
+  getDistance
 };

@@ -2,7 +2,7 @@ const fs = require('fs');
 require('dotenv').config({ path: '../config.env' });
 const connectDB = require('./database/db');
 const Tour = require('./models/Tour');
-const Review = require('./models/reviewModel');
+const Review = require('./models/Review');
 const User = require('./models/User');
 
 connectDB();
@@ -16,7 +16,6 @@ const users = JSON.parse(
 const reviews = JSON.parse(
   fs.readFileSync('./dev-data/data/reviews.json', 'utf-8'),
 );
-
 
 // dealing with tours Data
 async function addAllTours() {
@@ -42,7 +41,7 @@ async function deleteAllTours() {
 // dealing with Users Data
 async function addAllUsers() {
   try {
-    await User.create(users, { validateBeforeSave: false});
+    await User.create(users, { validateBeforeSave: false });
     console.log('all Users added');
   } catch (err) {
     console.log(err);
@@ -61,7 +60,7 @@ async function deleteAllUsers() {
 }
 
 // dealing with Reviews Data
-async function addAllReviews () {
+async function addAllReviews() {
   try {
     await Review.create(reviews);
     console.log('all Reviews added');

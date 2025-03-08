@@ -1,0 +1,19 @@
+doctype html
+html
+	head
+		title Natours | #{title}
+		meta(charset='UTF-8')
+		meta(name='viewport' content='width=device-width, initial-scale=1.0')
+		link(rel='stylesheet' href='/css/style.css')
+		link(rel='short icon' type='image/png' href='/img/favicon.png')
+		link(href='https://fonts.googleapi.com/css?family=Lato:300,300i,700' rel='stylesheet')
+
+	body
+		// header
+		include _header
+
+		// content
+		block content 
+
+		// footer
+		include _footer

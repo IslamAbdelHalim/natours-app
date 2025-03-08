@@ -9,6 +9,8 @@ const {
   getStatistics,
   topRatingAndCheapest,
   getToursInYear,
+  getToursWithin,
+  getDistance
 } = require('../controllers/toursControllers');
 const protectRoute = require('../controllers/authControllers').protectRoute;
 const restrict = require('../controllers/authControllers').restrict;
@@ -40,5 +42,10 @@ router
     restrict('admin', 'lead-guide'),
     asyncHandler(deleteTourById),
   );
+
+router.route('/tours-within/:distance/center/:latlang/unit/:unit')
+  .get(protectRoute, asyncHandler(getToursWithin));
+
+router.route('/distance/:latlang/unit/:unit').get(protectRoute, asyncHandler(getDistance));
 
 module.exports = router;
